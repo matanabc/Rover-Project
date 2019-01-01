@@ -2,6 +2,7 @@
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
@@ -67,23 +68,28 @@ public class Main {
 
 			int left;
 			int right;
+			
+			DatagramPacket receivePacket;
+			
+			String sentence;
+			String[] received;
+			
+			pwm.setPwm(0);
 
 			while(true)
 			{
 
 				Arrays.fill(receiveData, (byte)0);
-				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+				receivePacket = new DatagramPacket(receiveData, receiveData.length);
 				serverSocket.receive(receivePacket);
-				String sentence = new String(receivePacket.getData());
-
+				sentence = new String(receivePacket.getData());
+				
 				System.out.println("RECEIVED: " + sentence);
-
-				String[] received = sentence.split(";");
+				
+				received = sentence.split(";");
 
 				left = Integer.parseInt(received[0].trim());
 				right = Integer.parseInt(received[1].trim());
-
-
 
 				//58 is 0, 80 is 1, -1 is 1
 				if(left > 100) {
@@ -93,14 +99,19 @@ public class Main {
 					//System.out.println((int)(58 - (left * 0.58)));
 					pwm.setPwm((int)(58 - (left * 0.58)));	
 				}
-
+				
+				TimeUnit.MILLISECONDS.sleep(25);
+				pwm.setPwm(0);	
+				
+				
+				/*
 				if(right > 100) {
 					System.out.println((int)(58 + ((right -100) * 0.22)));
 					pwm.setPwm((int)(58 + ((right -100) * 0.22)));
 				} else {
 					System.out.println((int)(58 - (right * 0.58)));
 					pwm.setPwm((int)(58 - (right * 0.58)));	
-				}
+				}*/
 			}
 		} catch (Exception e) {
 			System.out.println("Error: " + e.getMessage());
