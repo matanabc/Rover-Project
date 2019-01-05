@@ -10,6 +10,7 @@ import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.util.CommandArgumentParser;
 import com.pi4j.util.Console;
+import java.util.concurrent.TimeUnit;
 
 
 public class Main {
@@ -48,14 +49,14 @@ public class Main {
 				RaspiPin.class,    // pin provider class to obtain pin instance from
 				RaspiPin.GPIO_01,  // default pin if no pin argument found
 				args);             // argument array to search in
-		
+
 		Pin pin2 = CommandArgumentParser.getPin(
 				RaspiPin.class,    // pin provider class to obtain pin instance from
 				RaspiPin.GPIO_23,  // default pin if no pin argument found
 				args);             // argument array to search in
 
-		GpioPinPwmOutput pwm = gpio.provisionPwmOutputPin(pin);
-		GpioPinPwmOutput pwm2 = gpio.provisionPwmOutputPin(pin2);
+		GpioPinPwmOutput leftMotors = gpio.provisionPwmOutputPin(pin);
+		GpioPinPwmOutput rightMotors = gpio.provisionPwmOutputPin(pin2);
 
 		// you can optionally use these wiringPi methods to further customize the PWM generator
 		// see: http://wiringpi.com/reference/raspberry-pi-specifics/
@@ -72,6 +73,7 @@ public class Main {
 
 			int left;
 			int right;
+			double slowDrive;
 
 			while(true)
 			{
@@ -85,84 +87,46 @@ public class Main {
 
 				String[] received = sentence.split(";");
 
-				left = Integer.parseInt(received[0].trim());
-				right = Integer.parseInt(received[1].trim());
-
-
+				left = Integer.parseInt(received[1].trim());
+				right = Integer.parseInt(received[0].trim());
+				slowDrive = Double.parseDouble(received[2].trim());
 
 				//58 is 0, 80 is 1, -1 is 1
 				if(left > 100) {
-					//System.out.println((int)(58 + ((left -100) * 0.22)));
-					pwm.setPwm((int)(58 + ((left -100) * 0.22)));
+					System.out.println(forward(left, slowDrive));
+					leftMotors.setPwm(forward(left, slowDrive));
 				} else {
-					//System.out.println((int)(58 - (left * 0.58)));
-					pwm.setPwm((int)(58 - (left * 0.58)));	
+					System.out.println(backward(left, slowDrive));
+					leftMotors.setPwm(backward(left, slowDrive));	
 				}
 
 				if(right > 100) {
-					System.out.println((int)(58 + ((right -100) * 0.22)));
-					pwm2.setPwm((int)(58 + ((right -100) * 0.22)));
+					System.out.println(forward(right, slowDrive));
+					rightMotors.setPwm(forward(right, slowDrive));
 				} else {
-					System.out.println((int)(58 - (right * 0.58)));
-					pwm2.setPwm((int)(58 - (right * 0.58)));	
+					System.out.println(backward(right, slowDrive));
+					rightMotors.setPwm(backward(right, slowDrive));	
 				}
+
+
+				TimeUnit.MILLISECONDS.sleep(25);
+				leftMotors.setPwm(0);	
+				rightMotors.setPwm(0);	
 			}
 		} catch (Exception e) {
 			System.out.println("Error: " + e.getMessage());
 		}
 
-
-
-		/*
-		Scanner s = new Scanner(System.in);
-
-	    while(true) {
-	    	System.out.println("enter output");
-	    	pwm.setPwm(s.nextInt());
-		}*/
-
-
-		/*
-		while(true) {
-			for(int i = 0; i < 1000; i++) {
-				pwm.setPwm(i);
-				i++;
-				TimeUnit.MILLISECONDS.sleep(1);
-			}
-
-			for(int i = 1000; i > 0; i--) {
-				pwm.setPwm(i);
-				TimeUnit.MILLISECONDS.sleep(1);
-			}
-		}*/
-
-
-		/*
-        // set the PWM rate to 500
-        pwm.setPwm(500);
-        console.println("PWM rate is: " + pwm.getPwm());
-
-        console.println("Press ENTER to set the PWM to a rate of 250");
-        System.console().readLine();
-
-        // set the PWM rate to 250
-        pwm.setPwm(250);
-        console.println("PWM rate is: " + pwm.getPwm());
-
-
-        console.println("Press ENTER to set the PWM to a rate to 0 (stop PWM)");
-        System.console().readLine();
-
-
-        // set the PWM rate to 0
-        pwm.setPwm(0);
-        console.println("PWM rate is: " + pwm.getPwm());
-
-		 */
 		// stop all GPIO activity/threads by shutting down the GPIO controller
 		// (this method will forcefully shutdown all GPIO monitoring threads and scheduled tasks)
 		//gpio.shutdown();
+	}
 
-
+	public static int forward(int joystickValue, double slowDrivepercentage) {
+		return (int)(58 - (joystickValue - 100) * 0.57 * slowDrivepercentage);
+	}
+	
+	public static int backward(int joystickValue, double slowDrivepercentage) {
+		return (int)(58 + joystickValue * 0.22 * slowDrivepercentage);
 	}
 }
