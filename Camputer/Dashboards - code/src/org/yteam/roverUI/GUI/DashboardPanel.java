@@ -19,7 +19,7 @@ public class DashboardPanel extends JPanel {
 		
 		OnOff buttons = new OnOff();
 		buttons.setBounds(0, 500, 1000, 60);
-		
+
 		add(stream);
 		add(stream2);
 		add(buttons);

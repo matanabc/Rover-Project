@@ -74,6 +74,8 @@ public class Main {
 			int left;
 			int right;
 			double slowDrive;
+			
+			System.out.println("starting");
 
 			while(true)
 			{
@@ -83,7 +85,7 @@ public class Main {
 				serverSocket.receive(receivePacket);
 				String sentence = new String(receivePacket.getData());
 
-				System.out.println("RECEIVED: " + sentence);
+				//System.out.println("RECEIVED: " + sentence);
 
 				String[] received = sentence.split(";");
 
@@ -93,18 +95,18 @@ public class Main {
 
 				//58 is 0, 80 is 1, -1 is 1
 				if(left > 100) {
-					System.out.println(forward(left, slowDrive));
+					//System.out.println(forward(left, slowDrive));
 					leftMotors.setPwm(forward(left, slowDrive));
 				} else {
-					System.out.println(backward(left, slowDrive));
+					//System.out.println(backward(left, slowDrive));
 					leftMotors.setPwm(backward(left, slowDrive));	
 				}
 
 				if(right > 100) {
-					System.out.println(forward(right, slowDrive));
+					//System.out.println(forward(right, slowDrive));
 					rightMotors.setPwm(forward(right, slowDrive));
 				} else {
-					System.out.println(backward(right, slowDrive));
+					//System.out.println(backward(right, slowDrive));
 					rightMotors.setPwm(backward(right, slowDrive));	
 				}
 
@@ -123,7 +125,8 @@ public class Main {
 	}
 
 	public static int forward(int joystickValue, double slowDrivepercentage) {
-		return (int)(58 - (joystickValue - 100) * 0.57 * slowDrivepercentage);
+		//System.out.println((int)(58 - ((joystickValue - 100) * 0.22 * slowDrivepercentage)));
+		return (int)(58 - ((joystickValue - 100) * 0.22 * slowDrivepercentage));//0.57
 	}
 	
 	public static int backward(int joystickValue, double slowDrivepercentage) {

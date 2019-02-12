@@ -2,8 +2,11 @@ package org.yteam.roverUI.GUI.Elements;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -15,6 +18,7 @@ import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 
 import org.yteam.roverUI.Main;
 
@@ -25,9 +29,9 @@ import net.java.games.input.ControllerEnvironment;
 
 public class OnOff extends JPanel{
 
-	protected JButton enableButton;
-	protected JButton disableButton;
-	protected JButton driveSlowButton;
+	protected static JButton enableButton;
+	protected static JButton disableButton;
+	protected static JButton driveSlowButton;
 
 	protected JButton joystickIsConnected;
 
@@ -115,14 +119,18 @@ public class OnOff extends JPanel{
 		add(joystickIsConnected);
 		add(driveSlowButton);
 
+		KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		manager.addKeyEventDispatcher(joystickThred);
+
 		setVisible(true);
 	}
 }
 
-class JoystickThread extends Thread {
+
+class JoystickThread extends Thread implements KeyEventDispatcher{
 	protected boolean sendValue = false;
 	protected double driveSlow = 1;
-	
+
 	private ArrayList<Controller> foundControllers = new ArrayList<>();
 
 	protected JButton joystickIsConnected;
@@ -133,6 +141,11 @@ class JoystickThread extends Thread {
 	private int left;
 	private int right;
 	private String send = "0;0;" + driveSlow;
+	
+	private char slowDriveKey = 's';
+	private char enableKey = 'e';
+	private char disableKey = 'd';
+	
 
 	public JoystickThread(JButton joystickIsConnected) {
 		super("Joystick");
@@ -166,7 +179,7 @@ class JoystickThread extends Thread {
 		searchForControllers();
 		sendingJoystickData();
 
-		
+
 		/*
 		if(foundControllers.isEmpty()) {
 			joystickIsConnected.setBackground(Color.RED);
@@ -247,16 +260,16 @@ class JoystickThread extends Thread {
 				foundControllers.add(controller);
 			}
 		}
-		
+
 		if(foundControllers.isEmpty()) {
-				JOptionPane.showMessageDialog(null, "Joystick Is Not Connected! close pogram and open it agen with joystic plog to computer");
-				System.exit(1);
+			JOptionPane.showMessageDialog(null, "Joystick Is Not Connected! close pogram and open it agen with joystic plog to computer");
+			System.exit(1);
 		}
 	}
 
 	private void sendingJoystickData(){
 		joystickIsConnected.setBackground(Color.GREEN);
-		
+
 		while(true)
 		{
 			Controller controller = foundControllers.get(0);//!
@@ -267,12 +280,12 @@ class JoystickThread extends Thread {
 				send = "0;0;" + driveSlow;
 				try {
 					clientSocket.send(new DatagramPacket(send.getBytes(), send.length(), IPAddress, 9876));
-					
+
 					joystickIsConnected.setBackground(Color.RED);
 					JOptionPane.showMessageDialog(null, "Joystick Is Not Connected! close pogram and open it agen with joystic plog to computer");
-					
+
 					System.exit(1);
-					
+
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -331,9 +344,9 @@ class JoystickThread extends Thread {
 					}
 
 					byte[] sendData = new byte[15];//512
-					
+
 					send = left + ";" + right + ";" + driveSlow;
-					
+
 					sendData = send.getBytes();
 					System.out.println(send);
 					clientSocket.send(new DatagramPacket(sendData, sendData.length, IPAddress, 9876));
@@ -382,9 +395,43 @@ class JoystickThread extends Thread {
 	}
 
 	public void setSlowDrive(boolean driveSlow) {
-		this.driveSlow = driveSlow ? 0.7 : 1;
+		this.driveSlow = driveSlow ? 0.6 : 1;
 	}
 	public boolean getSlowDrive() {
 		return driveSlow != 1;
+	}
+
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent e) {
+		/*
+		if (e.getID() == KeyEvent.KEY_PRESSED) {
+			System.out.println("tester");
+		} else if (e.getID() == KeyEvent.KEY_RELEASED) {
+			System.out.println("2test2");
+		} else if (e.getID() == KeyEvent.KEY_TYPED) {
+			System.out.println("3test3");
+		}*/
+		
+		//System.out.println(e.getKeyChar());
+
+		if (e.getID() == KeyEvent.KEY_TYPED && e.getKeyChar() == enableKey) {
+			setSendValue(true);
+			OnOff.enableButton.setBackground(Color.GREEN);
+			OnOff.disableButton.setBackground(Color.CYAN);
+		} else if(e.getID() == KeyEvent.KEY_TYPED && e.getKeyChar() == disableKey) {
+			setSendValue(false);
+			OnOff.disableButton.setBackground(Color.RED);
+			OnOff.enableButton.setBackground(Color.CYAN);
+		} else if(e.getID() == KeyEvent.KEY_TYPED && e.getKeyChar() == slowDriveKey) {
+			setSlowDrive(!getSlowDrive());
+			
+			if(getSlowDrive()) {
+				OnOff.driveSlowButton.setBackground(Color.GREEN);
+			} else {
+				OnOff.driveSlowButton.setBackground(Color.RED);
+			}
+		}
+
+		return false;
 	}
 }
