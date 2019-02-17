@@ -18,7 +18,6 @@ import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 
 import org.yteam.roverUI.Main;
 
@@ -395,7 +394,7 @@ class JoystickThread extends Thread implements KeyEventDispatcher{
 	}
 
 	public void setSlowDrive(boolean driveSlow) {
-		this.driveSlow = driveSlow ? 0.6 : 1;
+		this.driveSlow = driveSlow ? Main.getRoverSlowDrive() : 1;
 	}
 	public boolean getSlowDrive() {
 		return driveSlow != 1;
